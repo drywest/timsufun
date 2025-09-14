@@ -1,0 +1,49 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>YT LiveChat Overlay - Create</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <style>
+    body { font-family: Inter, system-ui, -apple-system, Arial; margin: 24px; color:#111 }
+    input, button { padding:8px 12px; font-size:16px; margin:6px 0 }
+    .hint { color:#666; font-size:14px }
+    .link { margin-top:12px; display:block }
+  </style>
+</head>
+<body>
+  <h1>YT LiveChat Overlay (InnerTube)</h1>
+  <p class="hint">Enter a Channel ID / handle / channel URL or a live Video ID. Click Create Overlay to get a custom overlay link.</p>
+
+  <label>Channel ID / @handle / URL / video id:</label><br/>
+  <input id="input" placeholder="e.g. UCxxxx or @handle or https://youtube.com/channel/..." size=60 />
+  <div>
+    <label>Poll frequency (ms) — smaller = faster (dangerous if too low)</label><br/>
+    <input id="freq" placeholder="700" value="700" />
+  </div>
+  <button id="create">Create Overlay</button>
+  <div id="result"></div>
+
+  <script>
+    document.getElementById('create').addEventListener('click', async () => {
+      const val = document.getElementById('input').value.trim();
+      const freq = parseInt(document.getElementById('freq').value) || 700;
+      if (!val) return alert('Provide channel id / url / video id');
+      document.getElementById('result').innerText = 'Resolving...';
+      const res = await fetch('/api/resolve/video/' + encodeURIComponent(val));
+      const data = await res.json();
+      if (!res.ok) {
+        document.getElementById('result').innerText = 'Error: ' + (data.error || JSON.stringify(data));
+        return;
+      }
+      const overlay = `${location.origin}/overlay/${data.videoId}?freq=${encodeURIComponent(freq)}`;
+      document.getElementById('result').innerHTML = `
+        <div>Video ID: <b>${data.videoId}</b></div>
+        <div>Overlay URL (open in browser or in OBS browser source):</div>
+        <a class="link" href="${overlay}" target="_blank">${overlay}</a>
+        <p class="hint">Open that URL full-screen (transparent background recommended) in OBS as Browser Source.</p>
+      `;
+    });
+  </script>
+</body>
+</html>
