@@ -1,0 +1,101 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>YT Chat Overlay</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="./overlay.css" />
+  <style>
+    /* small adjustments for embed mode */
+    html,body { height:100%; background: transparent; }
+  </style>
+</head>
+<body>
+  <div class="chat-wrap">
+    <div id="chatList" class="chat-list"></div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    // helper: parse channel param from URL
+    function getParam(name) {
+      const u = new URL(location.href);
+      return u.searchParams.get(name);
+    }
+    const channel = getParam('channel');
+    if(!channel) {
+      const el = document.createElement('div'); el.style.color = 'white'; el.textContent = 'No channel param'; document.body.appendChild(el);
+      throw new Error('No channel param');
+    }
+
+    const socket = io();
+
+    // consistent vibrant color for username
+    function colorFor(name) {
+      if(!name) return 'hsl(200 90% 60%)';
+      let h=0;
+      for(let i=0;i<name.length;i++){ h = (h*31 + name.charCodeAt(i)) % 360; }
+      // make colors very saturated & vibrant
+      return `hsl(${h} 92% 57%)`;
+    }
+
+    // create message element and append
+    function pushMessage(msg) {
+      const wrapper = document.getElementById('chatList');
+      const el = document.createElement('div');
+      el.className = 'msg';
+      const user = document.createElement('div');
+      user.className = 'username';
+      user.textContent = msg.author.name || 'unknown';
+      user.style.color = colorFor(msg.author.name || 'unknown');
+      const text = document.createElement('div');
+      text.className = 'text';
+      // sanitize basic - create text node
+      text.appendChild(document.createTextNode(msg.text || ''));
+
+      el.appendChild(user);
+      el.appendChild(text);
+
+      // insert at top (list is column-reverse to keep newest bottom visually)
+      wrapper.prepend(el);
+
+      // keep only 60 messages
+      const kids = wrapper.children;
+      if(kids.length > 80) {
+        // remove last (oldest)
+        wrapper.removeChild(wrapper.lastElementChild);
+      }
+
+      // schedule fadeout removal after 45s to keep overlay light
+      setTimeout(()=>{
+        el.classList.add('fadeout');
+        setTimeout(()=>{ try{ el.remove(); }catch{} }, 700);
+      }, 45000);
+    }
+
+    // connect & join room
+    socket.on('connect', () => {
+      socket.emit('join', { channel });
+    });
+
+    // receive chat events
+    socket.on('chat', (payload) => {
+      pushMessage(payload);
+    });
+
+    socket.on('meta', (m) => {
+      // optional logic
+      console.log('meta', m);
+    });
+
+    socket.on('ended', (d) => {
+      console.log('live ended', d);
+      // could show a small "offline" indicator if desired
+    });
+
+    socket.on('status', (s) => {
+      console.log('status', s);
+    });
+  </script>
+</body>
+</html>
