@@ -1,0 +1,77 @@
+<!-- public/index.html -->
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Create YouTube Live Chat Overlay Link</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    body{font-family:system-ui,Segoe UI,Roboto,Arial;margin:0;background:#0f1724;color:#e6eef8;display:flex;align-items:center;justify-content:center;height:100vh}
+    .card{width:880px;max-width:95%;background:#071029;padding:28px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.5)}
+    h1{margin:0 0 12px;font-size:20px}
+    label{display:block;margin-top:12px;font-size:13px;color:#9fb7d4}
+    input[type=text]{width:100%;padding:10px;border-radius:8px;border:1px solid #123446;background:#03121b;color:#e6eef8;box-sizing:border-box}
+    button{margin-top:14px;padding:10px 14px;border-radius:8px;border:0;background:#2b8cff;color:white;font-weight:600;cursor:pointer}
+    .result{margin-top:14px;padding:12px;background:#051826;border-radius:8px}
+    .hint{font-size:13px;color:#9fb7d4;margin-top:6px}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>YouTube Live Chat Overlay — Create permanent overlay link</h1>
+    <p class="hint">Paste the channel ID (not username). Example channelId: <code>UC_x5XG1OV2P6uZZ5FSM9Ttw</code></p>
+
+    <label for="channel">YouTube Channel ID</label>
+    <input id="channel" type="text" placeholder="UC..." />
+
+    <label for="custom">Optional label for your reference</label>
+    <input id="custom" type="text" placeholder="My stream chat" />
+
+    <button id="createBtn">Create overlay link</button>
+
+    <div id="result" class="result" style="display:none"></div>
+  </div>
+
+  <script>
+    const btn = document.getElementById('createBtn');
+    const channelIn = document.getElementById('channel');
+    const customIn = document.getElementById('custom');
+    const result = document.getElementById('result');
+
+    btn.onclick = async () => {
+      const channelId = channelIn.value.trim();
+      if (!channelId) {
+        alert('Enter a channel ID');
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = 'Creating...';
+      try {
+        const resp = await fetch('/create', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ channelId })
+        });
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data?.error || JSON.stringify(data));
+        const overlayUrl = data.overlayUrl;
+        const sseUrl = new URL('/sse', location.origin);
+        sseUrl.searchParams.set('key', data.key);
+
+        result.style.display = 'block';
+        result.innerHTML = `
+          <strong>Overlay URL (use as Browser Source):</strong>
+          <div style="margin-top:6px"><input style="width:100%;padding:10px;border-radius:6px;background:#03121b;color:#e6eef8;border:1px solid #123446" value="${overlayUrl}" readonly></div>
+          <div style="margin-top:8px"><strong>SSE endpoint (internal):</strong><div style="margin-top:6px"><input style="width:100%;padding:10px;border-radius:6px;background:#03121b;color:#e6eef8;border:1px solid #123446" value="${sseUrl.toString()}" readonly></div></div>
+          <div style="margin-top:10px;color:#9fb7d4">Tip: Add the overlay URL to OBS (Browser source). You can optionally add CSS filters/scale or host the overlay file externally.</div>
+        `;
+      } catch (err) {
+        alert('Error: ' + (err.message || err));
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Create overlay link';
+      }
+    };
+  </script>
+</body>
+</html>
