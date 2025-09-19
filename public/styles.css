@@ -1,0 +1,70 @@
+:root {
+  --bg: transparent;
+  --fg: #ffffff;
+  --accent: #ffffff;
+  --shadow: 0 10px 40px rgba(0,0,0,.4);
+  --radius: 18px;
+  --gap: 8px;
+}
+
+* { box-sizing: border-box }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: Manrope, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  font-weight: 800;
+}
+
+#chat {
+  position: fixed;
+  inset: 0;
+  padding: 12px;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: var(--gap);
+  pointer-events: none; /* clicks pass through for overlays */
+}
+
+.msg {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  background: rgba(14, 14, 20, 0.52);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.06);
+  box-shadow: var(--shadow);
+  max-width: min(100%, 900px);
+  animation: flyin .14s ease-out;
+}
+
+.msg__pfp {
+  width: 30px; height: 30px; border-radius: 999px; flex: 0 0 30px;
+  background: rgba(255,255,255,.15);
+}
+
+.msg__content {
+  line-height: 1.35;
+  word-wrap: break-word;
+  word-break: break-word;
+}
+
+.msg__author {
+  font-weight: 900;
+  letter-spacing: .2px;
+  margin-bottom: 2px;
+}
+
+.msg__text img.emoji {
+  height: 1.25em;
+  vertical-align: -0.2em;
+}
+
+@keyframes flyin {
+  from { transform: translateY(6px); opacity: .0; }
+  to   { transform: translateY(0);   opacity: 1; }
+}
